@@ -1,7 +1,15 @@
 import { Formik } from "formik";
 import * as yup from "yup";
-import { TextInput, View, Button, Text, StyleSheet } from "react-native";
+import {
+  TextInput,
+  View,
+  Button,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const validationSchema = yup.object().shape({
   name: yup
@@ -26,110 +34,125 @@ const validationSchema = yup.object().shape({
 
 const Form = ({ setSubmittedForm }) => {
   return (
-    <View style={styles.container}>
-      <Formik
-        initialValues={{
-          name: "",
-          gender: "M",
-          dateOfBirth: "",
-          weight: "",
-          height: "",
-          physicalActivityLevel: "1.2",
-          goalWeight: "",
-        }}
-        validationSchema={validationSchema}
-        onSubmit={(values) => {
-          console.log(values);
-          setSubmittedForm(true);
-        }}
-      >
-        {({
-          handleChange,
-          handleBlur,
-          handleSubmit,
-          values,
-          errors,
-          touched,
-        }) => (
-          <View style={styles.form}>
-            <TextInput
-              onChangeText={handleChange("name")}
-              onBlur={handleBlur("name")}
-              value={values.name}
-              placeholder="Name"
-              style={styles.input}
-            />
-            {errors.name && touched.name && <Text>{errors.name}</Text>}
-            <View style={styles.picker}>
-            <Picker
-              selectedValue={values.gender}
-              onValueChange={(itemValue) => handleChange("gender")(itemValue)}
-            >
-              <Picker.Item label="Male" value="M" />
-              <Picker.Item label="Female" value="F" />
-            </Picker>
+    <ScrollView>
+      <View style={styles.container}>
+        <Formik
+          initialValues={{
+            name: "",
+            gender: "M",
+            dateOfBirth: "",
+            weight: "",
+            height: "",
+            physicalActivityLevel: "1.2",
+            goalWeight: "",
+          }}
+          validationSchema={validationSchema}
+          onSubmit={(values) => {
+            const storeData = async (value) => {
+              try {
+                await AsyncStorage.setItem("@user_name", value);
+                console.log("Data saved:", value);
+              } catch (e) {
+                console.log(e);
+              }
+            };
+            storeData(values.name).then(() => {
+              setSubmittedForm(true);
+              console.log(values);
+            });
+          }}
+        >
+          {({
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            values,
+            errors,
+            touched,
+          }) => (
+            <View style={styles.form}>
+              <TextInput
+                onChangeText={handleChange("name")}
+                onBlur={handleBlur("name")}
+                value={values.name}
+                placeholder="Name"
+                style={styles.input}
+              />
+              {errors.name && touched.name && <Text>{errors.name}</Text>}
+              <View style={styles.picker}>
+                <Picker
+                  selectedValue={values.gender}
+                  onValueChange={(itemValue) =>
+                    handleChange("gender")(itemValue)
+                  }
+                >
+                  <Picker.Item label="Male" value="M" />
+                  <Picker.Item label="Female" value="F" />
+                </Picker>
+              </View>
+              {errors.gender && touched.gender && <Text>{errors.gender}</Text>}
+              <TextInput
+                onChangeText={handleChange("dateOfBirth")}
+                onBlur={handleBlur("dateOfBirth")}
+                value={values.dateOfBirth}
+                placeholder="Date of birth (YYYY-MM-DD)"
+                style={styles.input}
+              />
+              {errors.dateOfBirth && touched.dateOfBirth && (
+                <Text>{errors.dateOfBirth}</Text>
+              )}
+              <TextInput
+                onChangeText={handleChange("weight")}
+                onBlur={handleBlur("weight")}
+                value={values.weight}
+                placeholder="Weight (kg)"
+                keyboardType="numeric"
+                style={styles.input}
+              />
+              {errors.weight && touched.weight && <Text>{errors.weight}</Text>}
+              <TextInput
+                onChangeText={handleChange("height")}
+                onBlur={handleBlur("height")}
+                value={values.height}
+                placeholder="Height (m)"
+                keyboardType="numeric"
+                style={styles.input}
+              />
+              {errors.height && touched.height && <Text>{errors.height}</Text>}
+              <View style={styles.picker}>
+                <Picker
+                  selectedValue={values.physicalActivityLevel}
+                  onValueChange={(itemValue) =>
+                    handleChange("physicalActivityLevel")(itemValue)
+                  }
+                >
+                  <Picker.Item label="Sedentary" value={"1.2"} />
+                  <Picker.Item label="Lightly Active" value={"1.375"} />
+                  <Picker.Item label="Very Active" value={"1.725"} />
+                  <Picker.Item label="Extra Active" value={"1.9"} />
+                </Picker>
+              </View>
+              {errors.physicalActivityLevel &&
+                touched.physicalActivityLevel && (
+                  <Text>{errors.physicalActivityLevel}</Text>
+                )}
+              <TextInput
+                onChangeText={handleChange("goalWeight")}
+                onBlur={handleBlur("goalWeight")}
+                value={values.goalWeight}
+                placeholder="Goal Weight (kg)"
+                keyboardType="numeric"
+                style={styles.input}
+              />
+              {errors.goalWeight && touched.goalWeight && (
+                <Text>{errors.goalWeight}</Text>
+              )}
+              <Button onPress={handleSubmit} title="Submit" />
             </View>
-            {errors.gender && touched.gender && <Text>{errors.gender}</Text>}
-            <TextInput
-              onChangeText={handleChange("dateOfBirth")}
-              onBlur={handleBlur("dateOfBirth")}
-              value={values.dateOfBirth}
-              placeholder="Date of birth (YYYY-MM-DD)"
-              style={styles.input}
-            />
-            {errors.dateOfBirth && touched.dateOfBirth && (
-              <Text>{errors.dateOfBirth}</Text>
-            )}
-            <TextInput
-              onChangeText={handleChange("weight")}
-              onBlur={handleBlur("weight")}
-              value={values.weight}
-              placeholder="Weight (kg)"
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            {errors.weight && touched.weight && <Text>{errors.weight}</Text>}
-            <TextInput
-              onChangeText={handleChange("height")}
-              onBlur={handleBlur("height")}
-              value={values.height}
-              placeholder="Height (m)"
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            {errors.height && touched.height && <Text>{errors.height}</Text>}
-            <View style={styles.picker}>
-              <Picker
-                selectedValue={values.physicalActivityLevel}
-                onValueChange={(itemValue) =>
-                  handleChange("physicalActivityLevel")(itemValue)
-                }
-              >
-                <Picker.Item label="Sedentary" value={"1.2"} />
-                <Picker.Item label="Lightly Active" value={"1.375"} />
-                <Picker.Item label="Very Active" value={"1.725"} />
-                <Picker.Item label="Extra Active" value={"1.9"} />
-              </Picker>
-            </View>
-            {errors.physicalActivityLevel && touched.physicalActivityLevel && (
-              <Text>{errors.physicalActivityLevel}</Text>
-            )}
-            <TextInput
-              onChangeText={handleChange("goalWeight")}
-              onBlur={handleBlur("goalWeight")}
-              value={values.goalWeight}
-              placeholder="Goal Weight (kg)"
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            {errors.goalWeight && touched.goalWeight && (
-              <Text>{errors.goalWeight}</Text>
-            )}
-            <Button onPress={handleSubmit} title="Submit" />
-          </View>
-        )}
-      </Formik>
-    </View>
+          )}
+        </Formik>
+      </View>
+    </ScrollView>
   );
 };
 
