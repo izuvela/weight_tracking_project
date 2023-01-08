@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createUser } from "../api/users";
 
 const validationSchema = yup.object().shape({
   name: yup
@@ -17,7 +18,7 @@ const validationSchema = yup.object().shape({
     .min(3, "Name must contain at least 3 letters")
     .required("Name is required"),
   gender: yup.string().required("Gender is required"),
-  dateOfBirth: yup
+  date_of_birth: yup
     .string()
     .required("Date of birth is required")
     .matches(
@@ -26,13 +27,13 @@ const validationSchema = yup.object().shape({
     ),
   weight: yup.number().required("Weight is required"),
   height: yup.number().required("Height is required"),
-  physicalActivityLevel: yup
+  physical_activity_level: yup
     .string()
     .required("Physical activity level is required"),
-  goalWeight: yup.number().required("Goal weight is required"),
+  goal_weight: yup.number().required("Goal weight is required"),
 });
 
-const Form = ({ setSubmittedForm }) => {
+const Form = ({ setSubmittedForm, setUser }) => {
   return (
     <ScrollView>
       <View style={styles.container}>
@@ -40,26 +41,26 @@ const Form = ({ setSubmittedForm }) => {
           initialValues={{
             name: "",
             gender: "M",
-            dateOfBirth: "",
+            date_of_birth: "",
             weight: "",
             height: "",
-            physicalActivityLevel: "1.2",
-            goalWeight: "",
+            physical_activity_level: "1.2",
+            goal_weight: "",
           }}
           validationSchema={validationSchema}
           onSubmit={(values) => {
             const storeData = async (value) => {
               try {
-                await AsyncStorage.setItem("@user_name", value);
+                const userData = await createUser(value);
+                await AsyncStorage.setItem("@user_id", userData.id);
+                setUser(userData);
                 console.log("Data saved:", value);
               } catch (e) {
                 console.log(e);
               }
             };
-            storeData(values.name).then(() => {
-              // TODO: submit form to backend, receive response and set state
+            storeData(values).then(() => {
               setSubmittedForm(true);
-              console.log(values);
             });
           }}
         >
@@ -93,14 +94,14 @@ const Form = ({ setSubmittedForm }) => {
               </View>
               {errors.gender && touched.gender && <Text style={styles.error}>{errors.gender}</Text>}
               <TextInput
-                onChangeText={handleChange("dateOfBirth")}
-                onBlur={handleBlur("dateOfBirth")}
-                value={values.dateOfBirth}
+                onChangeText={handleChange("date_of_birth")}
+                onBlur={handleBlur("date_of_birth")}
+                value={values.date_of_birth}
                 placeholder="Date of birth (YYYY-MM-DD)"
                 style={styles.input}
               />
-              {errors.dateOfBirth && touched.dateOfBirth && (
-                <Text style={styles.error}>{errors.dateOfBirth}</Text>
+              {errors.date_of_birth && touched.date_of_birth && (
+                <Text style={styles.error}>{errors.date_of_birth}</Text>
               )}
               <TextInput
                 onChangeText={handleChange("weight")}
@@ -115,16 +116,16 @@ const Form = ({ setSubmittedForm }) => {
                 onChangeText={handleChange("height")}
                 onBlur={handleBlur("height")}
                 value={values.height}
-                placeholder="Height (m)"
+                placeholder="Height (cm)"
                 keyboardType="numeric"
                 style={styles.input}
               />
               {errors.height && touched.height && <Text style={styles.error}>{errors.height}</Text>}
               <View style={styles.picker}>
                 <Picker
-                  selectedValue={values.physicalActivityLevel}
+                  selectedValue={values.physical_activity_level}
                   onValueChange={(itemValue) =>
-                    handleChange("physicalActivityLevel")(itemValue)
+                    handleChange("physical_activity_level")(itemValue)
                   }
                 >
                   <Picker.Item label="Sedentary" value={"1.2"} />
@@ -133,20 +134,20 @@ const Form = ({ setSubmittedForm }) => {
                   <Picker.Item label="Extra Active" value={"1.9"} />
                 </Picker>
               </View>
-              {errors.physicalActivityLevel &&
-                touched.physicalActivityLevel && (
-                  <Text style={styles.error}>{errors.physicalActivityLevel}</Text>
+              {errors.physical_activity_level &&
+                touched.physical_activity_level && (
+                  <Text style={styles.error}>{errors.physical_activity_level}</Text>
                 )}
               <TextInput
-                onChangeText={handleChange("goalWeight")}
-                onBlur={handleBlur("goalWeight")}
-                value={values.goalWeight}
+                onChangeText={handleChange("goal_weight")}
+                onBlur={handleBlur("goal_weight")}
+                value={values.goal_weight}
                 placeholder="Goal Weight (kg)"
                 keyboardType="numeric"
                 style={styles.input}
               />
-              {errors.goalWeight && touched.goalWeight && (
-                <Text style={styles.error}>{errors.goalWeight}</Text>
+              {errors.goal_weight && touched.goal_weight && (
+                <Text style={styles.error}>{errors.goal_weight}</Text>
               )}
               <Button onPress={handleSubmit} title="Submit" />
             </View>

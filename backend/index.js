@@ -20,7 +20,7 @@ app.get("/users", async (req, res) => {
 app.get("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await pool.query('SELECT * FROM "user" WHERE id = $1', [id]);
+    const user = await pool.query('SELECT id, name, gender, height, weight, to_char(date_of_birth, \'YYYY-MM-DD\') as date_of_birth, physical_activity_level, goal_weight  FROM "user" WHERE id = $1', [id]);
     res.json(user.rows[0]);
   } catch (err) {
     console.error(err.message);
@@ -53,6 +53,17 @@ app.post("/users", async (req, res) => {
     );
     const user = newUser.rows[0];
     res.json(user);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// Delete a user
+app.delete("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM \"user\" WHERE id = $1", [id]);
+    res.json({ message: "User was deleted successfully" });
   } catch (err) {
     console.error(err.message);
   }

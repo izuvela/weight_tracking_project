@@ -1,14 +1,49 @@
 import { Button, StyleSheet, Text, View } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getPlan, getWeightIndicators } from "../api/users";
+import Divider from "../components/Divider";
 
-const HomeScreen = () => {
-  const [calorieGoal, setCalorieGoal] = useState(0);
-  const [caloriesConsumed, setCaloriesConsumed] = useState(0);
+const HomeScreen = ({ user }) => {
+  const [weightIndicators, setWeightIndicators] = useState(null);
+  const [waterGoal, setWaterGoal] = useState(null);
+  const [caloriesGoal, setCaloriesGoal] = useState(null);
+  const [proteinGoal, setProteinGoal] = useState(null);
+
+  const fetchData = async () => {
+    try {
+      getWeightIndicators(user.id).then((data) => {
+        setWeightIndicators(data.info);
+      });
+      getPlan(user.id).then((data) => {
+        setWaterGoal(data.water_goal);
+        setCaloriesGoal(data.calories_goal);
+        setProteinGoal(data.protein_goal);
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
-    <View style={styles.container}>
-      <Text>HomeScreen</Text>
-    </View>
+    <>
+      {weightIndicators && (
+        <View style={styles.container}>
+          <Text>BMI: {weightIndicators.bmi}</Text>
+          <Text>BMR: {weightIndicators.bmr}</Text>
+          <Text>
+            Body Fat Percentage: {weightIndicators.body_fat_percentage}%
+          </Text>
+          <Divider />
+          <Text>Calories goal: {caloriesGoal}</Text>
+          <Text>Protein goal: {proteinGoal} g</Text>
+          <Text>Water goal: {waterGoal} L</Text>
+        </View>
+      )}
+    </>
   );
 };
 
@@ -16,8 +51,6 @@ export default HomeScreen;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 20,
   },
 });

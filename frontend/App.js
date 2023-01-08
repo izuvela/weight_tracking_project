@@ -8,19 +8,23 @@ import React, { useState, useEffect } from "react";
 import Form from "./components/Form";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Loading from "./components/Loading";
+import { getUser } from "./api/users";
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
-  const getData = async () => {
+  const fetchData = async () => {
     try {
-      const value = await AsyncStorage.getItem("@user_name");
+      const value = await AsyncStorage.getItem("@user_id");
       if (value !== null) {
-        // value previously stored
-        // TODO fetch data from API and set state
+        getUser(value).then((data) => {
+          console.log(data);
+          setUser(data);
+        });
         return value;
       }
     } catch (e) {
@@ -29,10 +33,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    getData()
+    fetchData()
       .then((data) => {
         if (data) {
-          console.log(data);
           setFormSubmitted(true);
         }
       })
@@ -49,12 +52,12 @@ export default function App() {
 
   return (
     <>
-      {formSubmitted ? (
+      {formSubmitted && user ? (
         <NavigationContainer>
           <Tab.Navigator initialRouteName="Home" backBehavior="history">
             <Tab.Screen
               name="Home"
-              component={HomeScreen}
+              children={() => <HomeScreen user={user} />}
               options={{
                 tabBarIcon: ({ color, size }) => (
                   <MaterialCommunityIcons
@@ -67,7 +70,7 @@ export default function App() {
             />
             <Tab.Screen
               name="User"
-              component={UserScreen}
+              children={() => <UserScreen user={user} />}
               options={{
                 tabBarIcon: ({ color, size }) => (
                   <MaterialCommunityIcons
@@ -82,7 +85,7 @@ export default function App() {
         </NavigationContainer>
       ) : (
         <Modal visible={true} animationType="slide">
-          <Form setSubmittedForm={setFormSubmitted} />
+          <Form setSubmittedForm={setFormSubmitted} setUser={setUser}/>
         </Modal>
       )}
     </>
