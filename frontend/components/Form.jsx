@@ -57,6 +57,7 @@ const Form = ({ setSubmittedForm }) => {
               }
             };
             storeData(values.name).then(() => {
+              // TODO: submit form to backend, receive response and set state
               setSubmittedForm(true);
               console.log(values);
             });
@@ -78,7 +79,7 @@ const Form = ({ setSubmittedForm }) => {
                 placeholder="Name"
                 style={styles.input}
               />
-              {errors.name && touched.name && <Text>{errors.name}</Text>}
+              {errors.name && touched.name && <Text style={styles.error}>{errors.name}</Text>}
               <View style={styles.picker}>
                 <Picker
                   selectedValue={values.gender}
@@ -90,7 +91,7 @@ const Form = ({ setSubmittedForm }) => {
                   <Picker.Item label="Female" value="F" />
                 </Picker>
               </View>
-              {errors.gender && touched.gender && <Text>{errors.gender}</Text>}
+              {errors.gender && touched.gender && <Text style={styles.error}>{errors.gender}</Text>}
               <TextInput
                 onChangeText={handleChange("dateOfBirth")}
                 onBlur={handleBlur("dateOfBirth")}
@@ -99,7 +100,7 @@ const Form = ({ setSubmittedForm }) => {
                 style={styles.input}
               />
               {errors.dateOfBirth && touched.dateOfBirth && (
-                <Text>{errors.dateOfBirth}</Text>
+                <Text style={styles.error}>{errors.dateOfBirth}</Text>
               )}
               <TextInput
                 onChangeText={handleChange("weight")}
@@ -109,7 +110,7 @@ const Form = ({ setSubmittedForm }) => {
                 keyboardType="numeric"
                 style={styles.input}
               />
-              {errors.weight && touched.weight && <Text>{errors.weight}</Text>}
+              {errors.weight && touched.weight && <Text style={styles.error}>{errors.weight}</Text>}
               <TextInput
                 onChangeText={handleChange("height")}
                 onBlur={handleBlur("height")}
@@ -118,7 +119,7 @@ const Form = ({ setSubmittedForm }) => {
                 keyboardType="numeric"
                 style={styles.input}
               />
-              {errors.height && touched.height && <Text>{errors.height}</Text>}
+              {errors.height && touched.height && <Text style={styles.error}>{errors.height}</Text>}
               <View style={styles.picker}>
                 <Picker
                   selectedValue={values.physicalActivityLevel}
@@ -134,7 +135,7 @@ const Form = ({ setSubmittedForm }) => {
               </View>
               {errors.physicalActivityLevel &&
                 touched.physicalActivityLevel && (
-                  <Text>{errors.physicalActivityLevel}</Text>
+                  <Text style={styles.error}>{errors.physicalActivityLevel}</Text>
                 )}
               <TextInput
                 onChangeText={handleChange("goalWeight")}
@@ -145,7 +146,7 @@ const Form = ({ setSubmittedForm }) => {
                 style={styles.input}
               />
               {errors.goalWeight && touched.goalWeight && (
-                <Text>{errors.goalWeight}</Text>
+                <Text style={styles.error}>{errors.goalWeight}</Text>
               )}
               <Button onPress={handleSubmit} title="Submit" />
             </View>
