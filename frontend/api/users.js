@@ -64,8 +64,16 @@ export const getWeightIndicators = (id) => {
 };
 
 export const getPlan = (id) => {
-    console.log(`${apiOrigin}/users/${id}/plan`);
   return fetch(`${apiOrigin}/users/${id}/plan`).then((res) => {
+    if (!res.ok) {
+      throw res;
+    }
+    return res.json();
+  });
+};
+
+export const getDiary = (id) => {
+  return fetch(`${apiOrigin}/users/${id}/diary`).then((res) => {
     if (!res.ok) {
       throw res;
     }
