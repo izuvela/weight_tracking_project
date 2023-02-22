@@ -16,7 +16,7 @@ const clearAll = async (user) => {
   console.log("Deleted.");
 };
 
-const UserScreen = ({ user }) => {
+const UserScreen = ({ user, route }) => {
   const [weightIndicators, setWeightIndicators] = useState(null);
 
   const fetchData = async () => {
@@ -31,7 +31,7 @@ const UserScreen = ({ user }) => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [route]);
 
   return (
     <>

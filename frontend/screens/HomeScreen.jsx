@@ -13,7 +13,7 @@ import Divider from "../components/Divider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { getMeals } from "../api/meals";
 
-const HomeScreen = ({ user }) => {
+const HomeScreen = ({ user, route }) => {
   const [waterGoal, setWaterGoal] = useState(null);
   const [caloriesGoal, setCaloriesGoal] = useState(null);
   const [proteinGoal, setProteinGoal] = useState(null);
@@ -46,7 +46,8 @@ const HomeScreen = ({ user }) => {
 
   useEffect(() => {
     fetchData();
-  }, [waterConsumed, caloriesConsumed, proteinConsumed]);
+    console.log("uspjeh");
+  }, [route]);
 
   return (
     <>

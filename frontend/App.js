@@ -2,7 +2,10 @@ import { Button, Modal, StyleSheet, Text } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "./screens/HomeScreen";
 import UserScreen from "./screens/UserScreen";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  createNavigationContainerRef,
+  NavigationContainer,
+} from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useState, useEffect } from "react";
 import Form from "./components/Form";
@@ -16,6 +19,8 @@ export default function App() {
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const navigationRef = createNavigationContainerRef();
+  const [routeName, setRouteName] = useState();
 
   const fetchData = async () => {
     try {
@@ -53,15 +58,23 @@ export default function App() {
   return (
     <>
       {formSubmitted && user ? (
-        <NavigationContainer>
-          <Tab.Navigator initialRouteName="Home" backBehavior="history">
+        <NavigationContainer
+          ref={navigationRef}
+          onReady={() => {
+            setRouteName(navigationRef.getCurrentRoute()?.name);
+          }}
+          onStateChange={() => {
+            setRouteName(navigationRef.getCurrentRoute()?.name);
+          }}
+        >
+          <Tab.Navigator initialRouteName='Home' backBehavior='history'>
             <Tab.Screen
-              name="Home"
-              children={() => <HomeScreen user={user} />}
+              name='Home'
+              children={() => <HomeScreen user={user} route={routeName} />}
               options={{
                 tabBarIcon: ({ color, size }) => (
                   <MaterialCommunityIcons
-                    name="home"
+                    name='home'
                     color={color}
                     size={size}
                   />
@@ -69,12 +82,12 @@ export default function App() {
               }}
             />
             <Tab.Screen
-              name="User"
-              children={() => <UserScreen user={user} />}
+              name='User'
+              children={() => <UserScreen user={user} route={routeName} />}
               options={{
                 tabBarIcon: ({ color, size }) => (
                   <MaterialCommunityIcons
-                    name="human"
+                    name='human'
                     color={color}
                     size={size}
                   />
@@ -84,8 +97,8 @@ export default function App() {
           </Tab.Navigator>
         </NavigationContainer>
       ) : (
-        <Modal visible={true} animationType="slide">
-          <Form setSubmittedForm={setFormSubmitted} setUser={setUser}/>
+        <Modal visible={true} animationType='slide'>
+          <Form setSubmittedForm={setFormSubmitted} setUser={setUser} />
         </Modal>
       )}
     </>
