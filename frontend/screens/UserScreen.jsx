@@ -1,8 +1,16 @@
-import { StyleSheet, Text, View, Button } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Button,
+  Modal,
+  TouchableOpacity,
+} from "react-native";
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { deleteUser, getWeightIndicators } from "../api/users";
 import Divider from "../components/Divider";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const clearAll = async (user) => {
   try {
@@ -18,6 +26,7 @@ const clearAll = async (user) => {
 
 const UserScreen = ({ user, route }) => {
   const [weightIndicators, setWeightIndicators] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -36,7 +45,7 @@ const UserScreen = ({ user, route }) => {
   return (
     <>
       {weightIndicators && (
-        <View style={styles.container}>
+        <View style={styles.mainContainer}>
           <Text>Name: {user.name}</Text>
           <Text>Gender: {user.gender}</Text>
           <Text>Date of Birth: {user.date_of_birth}</Text>
@@ -51,8 +60,24 @@ const UserScreen = ({ user, route }) => {
             Body Fat Percentage: {weightIndicators.body_fat_percentage}%
           </Text>
           <Divider />
-          <Button title="Delete user" onPress={() => clearAll(user)} />
+          <Button title='Delete user' onPress={() => setDeleteModal(true)} />
         </View>
+      )}
+      {deleteModal && (
+        <Modal animationType='slide'>
+          <View style={styles.container}>
+            <TouchableOpacity
+              onPress={() => setDeleteModal(false)}
+              style={styles.closeIcon}
+            >
+              <MaterialCommunityIcons name='close' size={30} color='#000' />
+            </TouchableOpacity>
+            <Text style={styles.text}>
+              Are you sure you want to delete your account?
+            </Text>
+            <Button title='Yes' onPress={() => clearAll(user)} />
+          </View>
+        </Modal>
       )}
     </>
   );
@@ -61,7 +86,23 @@ const UserScreen = ({ user, route }) => {
 export default UserScreen;
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     padding: 30,
+  },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 30,
+  },
+  closeIcon: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    padding: 10,
+  },
+  text: {
+    textAlign: "center",
+    marginBottom: 20,
   },
 });
