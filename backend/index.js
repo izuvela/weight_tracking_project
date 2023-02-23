@@ -20,7 +20,10 @@ app.get("/users", async (req, res) => {
 app.get("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await pool.query('SELECT id, name, gender, height, weight, to_char(date_of_birth, \'YYYY-MM-DD\') as date_of_birth, physical_activity_level, goal_weight  FROM "user" WHERE id = $1', [id]);
+    const user = await pool.query(
+      "SELECT id, name, gender, height, weight, to_char(date_of_birth, 'YYYY-MM-DD') as date_of_birth, physical_activity_level, goal_weight  FROM \"user\" WHERE id = $1",
+      [id]
+    );
     res.json(user.rows[0]);
   } catch (err) {
     console.error(err.message);
@@ -62,7 +65,7 @@ app.post("/users", async (req, res) => {
 app.delete("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query("DELETE FROM \"user\" WHERE id = $1", [id]);
+    await pool.query('DELETE FROM "user" WHERE id = $1', [id]);
     res.json({ message: "User was deleted successfully" });
   } catch (err) {
     console.error(err.message);
@@ -137,7 +140,7 @@ app.put("/users/:id/diary", async (req, res) => {
   }
 });
 
-// Create a meal for a user
+// Create a meal for a user (updating diary table)
 app.post("/users/:id/meals", async (req, res) => {
   try {
     const { id } = req.params;
@@ -164,6 +167,11 @@ app.post("/users/:id/meals", async (req, res) => {
       "INSERT INTO diary_meal (diary_id, meal_id, type_of_meal) VALUES ((SELECT id FROM diary WHERE plan_id = $1 AND day = $2), $3, $4)",
       [plan.id, currentDate, meal.id, type_of_meal]
     );
+    // Update the diary with the calories, protein, and water consumed from the meal
+    await pool.query(
+      "UPDATE diary SET calories_consumed = calories_consumed + $1, protein_consumed = protein_consumed + $2 WHERE plan_id = $3 AND day = $4",
+      [info.calories, info.protein, plan.id, currentDate]
+    );
 
     res.json({ success: true });
   } catch (err) {
@@ -180,10 +188,14 @@ app.get("/users/:id/meals", async (req, res) => {
       id,
     ]);
     const planId = plan.rows[0].id;
-    const currentDate = new Date().toISOString().slice(0, 10);
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
+    const day = currentDate.getDate().toString().padStart(2, "0");
+    const formattedDate = `${year}-${month}-${day}`;
     const meals = await pool.query(
       "SELECT meal_id, type_of_meal, info FROM diary_meal INNER JOIN meal ON diary_meal.meal_id = meal.id WHERE diary_id = (SELECT id FROM diary WHERE plan_id = $1 AND day = $2)",
-      [planId, currentDate]
+      [planId, formattedDate]
     );
     res.json(meals.rows);
   } catch (err) {
@@ -284,34 +296,51 @@ app.delete("/exercises/:id", async (req, res) => {
 
 // Update meal info and type_of_meal with meal id
 app.put("/meals/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { info, type_of_meal } = req.body;
-      // Update the meal
-      const mealResult = await pool.query(
-        "UPDATE meal SET info = $1 WHERE id = $2",
-        [info, id]
-      );
-      // Update the type_of_meal in diary_meal
-      const diaryResult = await pool.query(
-        "UPDATE diary_meal SET type_of_meal = $1 WHERE meal_id = $2",
-        [type_of_meal, id]
-      );
-      res.json({ success: true });
-    } catch (err) {
-      console.error(err.message);
-      res.json({ success: false });
-    }
-  });
-  
-// Delete meal with meal id
+  try {
+    const { id } = req.params;
+    const { info, type_of_meal } = req.body;
+    // Update the meal
+    const mealResult = await pool.query(
+      "UPDATE meal SET info = $1 WHERE id = $2",
+      [info, id]
+    );
+    // Update the type_of_meal in diary_meal
+    const diaryResult = await pool.query(
+      "UPDATE diary_meal SET type_of_meal = $1 WHERE meal_id = $2",
+      [type_of_meal, id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err.message);
+    res.json({ success: false });
+  }
+});
+
+// Delete meal with meal id (updating the diary)
 app.delete("/meals/:id", async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Get the meal's nutrition information
+    const mealResult = await pool.query(
+      "SELECT info, diary_id, type_of_meal FROM meal JOIN diary_meal ON meal.id = diary_meal.meal_id WHERE meal.id = $1",
+      [id]
+    );
+    const meal = mealResult.rows[0];
+
+    // Delete the meal from the database
     await pool.query("DELETE FROM meal WHERE id = $1", [id]);
+
+    // Update the diary with the calories and protein consumed from the deleted meal
+    await pool.query(
+      "UPDATE diary SET calories_consumed = calories_consumed - $1, protein_consumed = protein_consumed - $2 WHERE id = $3",
+      [meal.info.calories, meal.info.protein, meal.diary_id]
+    );
+
     res.json({ message: "Meal deleted successfully" });
   } catch (err) {
     console.error(err.message);
+    res.json({ message: "Failed to delete meal" });
   }
 });
 

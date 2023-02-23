@@ -11,7 +11,7 @@ import React, { useState, useEffect } from "react";
 import { getDiary, getPlan } from "../api/users";
 import Divider from "../components/Divider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { getMeals } from "../api/meals";
+import { deleteMeal, getMeals } from "../api/meals";
 
 const HomeScreen = ({ user, route }) => {
   const [waterGoal, setWaterGoal] = useState(null);
@@ -22,6 +22,7 @@ const HomeScreen = ({ user, route }) => {
   const [proteinConsumed, setProteinConsumed] = useState(null);
   const [mealsScreen, setMealsScreen] = useState(false);
   const [meals, setMeals] = useState(null);
+  const [addMealsScreen, setAddMealsScreen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -47,7 +48,7 @@ const HomeScreen = ({ user, route }) => {
   useEffect(() => {
     fetchData();
     console.log("uspjeh");
-  }, [route]);
+  }, [route, mealsScreen]);
 
   return (
     <>
@@ -61,20 +62,23 @@ const HomeScreen = ({ user, route }) => {
           <Text>Protein consumed: {proteinConsumed} g</Text>
           <Text>Water consumed: {waterConsumed} L</Text>
           <Divider />
-          <Button title="Meals" onPress={() => setMealsScreen(true)} />
+          <Button title='Meals' onPress={() => setMealsScreen(true)} />
         </View>
       )}
       {mealsScreen && (
-        <Modal animationType="slide">
+        <Modal animationType='slide'>
           <View style={styles.container}>
             <TouchableOpacity
               onPress={() => setMealsScreen(false)}
               style={styles.closeIcon}
             >
-              <MaterialCommunityIcons name="close" size={30} color="#000" />
+              <MaterialCommunityIcons name='close' size={30} color='#000' />
             </TouchableOpacity>
             <View style={styles.listOfMeals}>
-              <Button title="Add a meal" />
+              <Button
+                title='Add a meal'
+                onPress={() => setAddMealsScreen(true)}
+              />
               <Divider />
               <FlatList
                 data={meals}
@@ -88,12 +92,15 @@ const HomeScreen = ({ user, route }) => {
                     <Text>Protein: {item.info.protein} g</Text>
                     <TouchableOpacity
                       style={styles.deleteButton}
-                      onPress={() => {}}
+                      onPress={() => {
+                        deleteMeal(item.meal_id);
+                        fetchData();
+                      }}
                     >
                       <MaterialCommunityIcons
-                        name="delete"
+                        name='delete'
                         size={24}
-                        color="red"
+                        color='red'
                       />
                     </TouchableOpacity>
                   </View>
@@ -101,6 +108,18 @@ const HomeScreen = ({ user, route }) => {
                 keyExtractor={(item) => item.meal_id}
               />
             </View>
+          </View>
+        </Modal>
+      )}
+      {addMealsScreen && (
+        <Modal animationType='slide'>
+          <View style={styles.container}>
+            <TouchableOpacity
+              onPress={() => setAddMealsScreen(false)}
+              style={styles.closeIcon}
+            >
+              <MaterialCommunityIcons name='close' size={30} color='#000' />
+            </TouchableOpacity>
           </View>
         </Modal>
       )}
