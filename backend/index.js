@@ -232,6 +232,12 @@ app.post("/users/:id/exercises", async (req, res) => {
       [plan.id, currentDate, exercise.id, currentDate]
     );
 
+    // Update the diary with the calories spent in the exercise
+    await pool.query(
+      "UPDATE diary SET calories_consumed = calories_consumed - $1 WHERE plan_id = $2 AND day = $3",
+      [info.calories_spent, plan.id, currentDate]
+    );
+
     res.json({ success: true });
   } catch (err) {
     console.error(err.message);

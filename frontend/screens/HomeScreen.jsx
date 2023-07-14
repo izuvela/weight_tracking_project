@@ -14,6 +14,7 @@ import { getDiary, getPlan, updateDiary } from "../api/users";
 import Divider from "../components/Divider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { deleteMeal, getMeals, createMeal } from "../api/meals";
+import { deleteExercise, getExercises, createExercise } from "../api/exercises";
 
 const HomeScreen = ({ user, route }) => {
   const [waterGoal, setWaterGoal] = useState(null);
@@ -35,6 +36,45 @@ const HomeScreen = ({ user, route }) => {
   const [message, setMessage] = useState("");
 
   const [newWaterIntake, setNewWaterIntake] = useState(null);
+
+  const [exercisesScreen, setExercisesScreen] = useState(false);
+  const [exercises, setExercises] = useState(null);
+  const [addExercisesScreen, setAddExercisesScreen] = useState(false);
+
+  const [exerciseName, setExerciseName] = useState("");
+  const [duration, setDuration] = useState("");
+  const [caloriesSpent, setCaloriesSpent] = useState("");
+
+  const handleSubmitExercise = () => {
+    const exerciseData = {
+      info: {
+        name: exerciseName,
+        duration: parseInt(duration),
+        calories_spent: parseInt(caloriesSpent),
+      },
+    };
+    createExercise(user.id, exerciseData)
+      .then((response) => {
+        console.log(response);
+        if (response.success) {
+          setMessage("Success");
+          // Reset all fields to blank after submitting
+          setExerciseName("");
+          setDuration("");
+          setCaloriesSpent("");
+          setTimeout(() => {
+            setAddExercisesScreen(false);
+            setExercisesScreen(false);
+            setMessage("");
+          }, 1000);
+        } else {
+          setMessage("Error");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
 
   const handleUpdateWaterIntake = () => {
     const updatedDiary = {
@@ -84,6 +124,7 @@ const HomeScreen = ({ user, route }) => {
           setTimeout(() => {
             setAddMealsScreen(false);
             setMealsScreen(false);
+            setMessage("");
           }, 1000);
         } else {
           setMessage("Error");
@@ -108,6 +149,9 @@ const HomeScreen = ({ user, route }) => {
       });
       getMeals(user.id).then((data) => {
         setMeals(data);
+      });
+      getExercises(user.id).then((data) => {
+        setExercises(data);
         console.log(data);
       });
     } catch (e) {
@@ -118,7 +162,7 @@ const HomeScreen = ({ user, route }) => {
   useEffect(() => {
     fetchData();
     console.log("uspjeh");
-  }, [route, mealsScreen]);
+  }, [route, mealsScreen, exercisesScreen]);
 
   return (
     <>
@@ -133,6 +177,8 @@ const HomeScreen = ({ user, route }) => {
           <Text>Water consumed: {waterConsumed} L</Text>
           <Divider />
           <Button title='Meals' onPress={() => setMealsScreen(true)} />
+          <Divider />
+          <Button title='Exercises' onPress={() => setExercisesScreen(true)} />
           <Divider />
           <TextInput
             placeholder='Enter new water intake'
@@ -238,6 +284,82 @@ const HomeScreen = ({ user, route }) => {
           </View>
         </Modal>
       )}
+      {exercisesScreen && (
+        <Modal animationType='slide'>
+          <View style={[styles.container, { flex: 1 }]}>
+            <TouchableOpacity
+              onPress={() => setExercisesScreen(false)}
+              style={styles.closeIcon}
+            >
+              <MaterialCommunityIcons name='close' size={30} color='#000' />
+            </TouchableOpacity>
+            <View style={styles.listOfExercises}>
+              <Button
+                title='Add an exercise'
+                onPress={() => setAddExercisesScreen(true)}
+              />
+              <Divider />
+              <FlatList
+                data={exercises}
+                renderItem={({ item }) => (
+                  <View style={styles.item}>
+                    <Text>Name: {item.info.name}</Text>
+                    <Text>Duration: {item.info.duration}</Text>
+                    <Text>Calories Spent: {item.info.calories_spent}</Text>
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => {
+                        deleteExercise(item.exercise_id);
+                        fetchData();
+                      }}
+                    >
+                      <MaterialCommunityIcons
+                        name='delete'
+                        size={24}
+                        color='red'
+                      />
+                    </TouchableOpacity>
+                  </View>
+                )}
+                keyExtractor={(item) => item.exercise_id}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+      {addExercisesScreen && (
+        <Modal animationType='slide'>
+          <View style={styles.container}>
+            <TouchableOpacity
+              onPress={() => setAddExercisesScreen(false)}
+              style={styles.closeIcon}
+            >
+              <MaterialCommunityIcons name='close' size={30} color='#000' />
+            </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder='Exercise Name'
+                value={exerciseName}
+                onChangeText={(text) => setExerciseName(text)}
+              />
+              <TextInput
+                placeholder='Duration'
+                value={duration}
+                onChangeText={(text) => setDuration(text)}
+              />
+              <TextInput
+                placeholder='Calories Spent'
+                value={caloriesSpent}
+                onChangeText={(text) => setCaloriesSpent(text)}
+                style={"margin-bottom: 20px"}
+              />
+              <Button title='Submit Exercise' onPress={handleSubmitExercise} />
+              <Divider />
+              <Text>{message}</Text>
+            </View>
+          </View>
+        </Modal>
+      )}
     </>
   );
 };
@@ -256,6 +378,9 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   listOfMeals: {
+    marginTop: 50,
+  },
+  listOfExercises: {
     marginTop: 50,
   },
   item: {
