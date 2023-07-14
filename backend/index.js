@@ -134,9 +134,10 @@ app.put("/users/:id/diary", async (req, res) => {
         currentDate,
       ]
     );
-    res.json({ message: "Diary entry updated successfully" });
+    res.json({ success: true });
   } catch (err) {
     console.error(err.message);
+    res.json({ success: false });
   }
 });
 

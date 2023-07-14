@@ -80,3 +80,15 @@ export const getDiary = (id) => {
     return res.json();
   });
 };
+
+export const updateDiary = async (userId, updatedDiary) => {
+  const response = await fetch(`${apiOrigin}/users/${userId}/diary`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updatedDiary),
+  });
+  const data = await response.json();
+  return data;
+};

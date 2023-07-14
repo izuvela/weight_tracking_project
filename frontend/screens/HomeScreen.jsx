@@ -10,7 +10,7 @@ import {
   Alert,
 } from "react-native";
 import React, { useState, useEffect } from "react";
-import { getDiary, getPlan } from "../api/users";
+import { getDiary, getPlan, updateDiary } from "../api/users";
 import Divider from "../components/Divider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { deleteMeal, getMeals, createMeal } from "../api/meals";
@@ -33,6 +33,30 @@ const HomeScreen = ({ user, route }) => {
   const [fat, setFat] = useState("");
   const [protein, setProtein] = useState("");
   const [message, setMessage] = useState("");
+
+  const [newWaterIntake, setNewWaterIntake] = useState(null);
+
+  const handleUpdateWaterIntake = () => {
+    const updatedDiary = {
+      protein_consumed: proteinConsumed,
+      calories_consumed: caloriesConsumed,
+      water_consumed: newWaterIntake,
+      notes: "", // or get notes from state if you have it
+    };
+    updateDiary(user.id, updatedDiary)
+      .then((response) => {
+        console.log(response);
+        if (response.success) {
+          setWaterConsumed(newWaterIntake);
+          setNewWaterIntake(""); // reset new water intake
+        } else {
+          // Handle error
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
 
   const handleSubmitMeal = () => {
     const mealData = {
@@ -109,11 +133,21 @@ const HomeScreen = ({ user, route }) => {
           <Text>Water consumed: {waterConsumed} L</Text>
           <Divider />
           <Button title='Meals' onPress={() => setMealsScreen(true)} />
+          <Divider />
+          <TextInput
+            placeholder='Enter new water intake'
+            value={newWaterIntake}
+            onChangeText={(text) => setNewWaterIntake(text)}
+          />
+          <Button
+            title='Update Water Intake'
+            onPress={handleUpdateWaterIntake}
+          />
         </View>
       )}
       {mealsScreen && (
         <Modal animationType='slide'>
-          <View style={[styles.container, {flex: 1}]}>
+          <View style={[styles.container, { flex: 1 }]}>
             <TouchableOpacity
               onPress={() => setMealsScreen(false)}
               style={styles.closeIcon}
@@ -213,7 +247,7 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   container: {
     padding: 30,
-    paddingBottom: 100
+    paddingBottom: 100,
   },
   closeIcon: {
     position: "absolute",
