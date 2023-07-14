@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   View,
   FlatList,
+  TextInput,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { getDiary, getPlan } from "../api/users";
 import Divider from "../components/Divider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { deleteMeal, getMeals } from "../api/meals";
+import { deleteMeal, getMeals, createMeal } from "../api/meals";
 
 const HomeScreen = ({ user, route }) => {
   const [waterGoal, setWaterGoal] = useState(null);
@@ -23,6 +25,50 @@ const HomeScreen = ({ user, route }) => {
   const [mealsScreen, setMealsScreen] = useState(false);
   const [meals, setMeals] = useState(null);
   const [addMealsScreen, setAddMealsScreen] = useState(false);
+
+  const [name, setName] = useState("");
+  const [typeOfMeal, setTypeOfMeal] = useState("");
+  const [calories, setCalories] = useState("");
+  const [carbohydrates, setCarbohydrates] = useState("");
+  const [fat, setFat] = useState("");
+  const [protein, setProtein] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSubmitMeal = () => {
+    const mealData = {
+      info: {
+        name: name,
+        calories: parseInt(calories),
+        carbohydrates: parseInt(carbohydrates),
+        fat: parseInt(fat),
+        protein: parseInt(protein),
+      },
+      type_of_meal: typeOfMeal,
+    };
+    createMeal(user.id, mealData)
+      .then((response) => {
+        console.log(response);
+        if (response.success) {
+          setMessage("Success");
+          // Reset all fields to blank after submitting
+          setName("");
+          setTypeOfMeal("");
+          setCalories("");
+          setCarbohydrates("");
+          setFat("");
+          setProtein("");
+          setTimeout(() => {
+            setAddMealsScreen(false);
+            setMealsScreen(false);
+          }, 1000);
+        } else {
+          setMessage("Error");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
 
   const fetchData = async () => {
     try {
@@ -67,7 +113,7 @@ const HomeScreen = ({ user, route }) => {
       )}
       {mealsScreen && (
         <Modal animationType='slide'>
-          <View style={styles.container}>
+          <View style={[styles.container, {flex: 1}]}>
             <TouchableOpacity
               onPress={() => setMealsScreen(false)}
               style={styles.closeIcon}
@@ -120,6 +166,41 @@ const HomeScreen = ({ user, route }) => {
             >
               <MaterialCommunityIcons name='close' size={30} color='#000' />
             </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder='Meal Name'
+                value={name}
+                onChangeText={(text) => setName(text)}
+              />
+              <TextInput
+                placeholder='Type of Meal'
+                value={typeOfMeal}
+                onChangeText={(text) => setTypeOfMeal(text)}
+              />
+              <TextInput
+                placeholder='Calories'
+                value={calories}
+                onChangeText={(text) => setCalories(text)}
+              />
+              <TextInput
+                placeholder='Carbohydrates'
+                value={carbohydrates}
+                onChangeText={(text) => setCarbohydrates(text)}
+              />
+              <TextInput
+                placeholder='Fat'
+                value={fat}
+                onChangeText={(text) => setFat(text)}
+              />
+              <TextInput
+                placeholder='Protein'
+                value={protein}
+                onChangeText={(text) => setProtein(text)}
+              />
+              <Button title='Submit Meal' onPress={handleSubmitMeal} />
+              <Divider />
+              <Text>{message}</Text>
+            </View>
           </View>
         </Modal>
       )}
@@ -132,6 +213,7 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   container: {
     padding: 30,
+    paddingBottom: 100
   },
   closeIcon: {
     position: "absolute",
@@ -158,5 +240,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     padding: 10,
+  },
+  inputContainer: {
+    marginTop: 50,
   },
 });
