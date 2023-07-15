@@ -13,7 +13,7 @@ import React, { useState, useEffect } from "react";
 import { getDiary, getPlan, updateDiary } from "../api/users";
 import Divider from "../components/Divider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { deleteMeal, getMeals, createMeal } from "../api/meals";
+import { deleteMeal, getMeals, createMeal, updateMeal } from "../api/meals";
 import { deleteExercise, getExercises, createExercise } from "../api/exercises";
 
 const HomeScreen = ({ user, route }) => {
@@ -44,6 +44,52 @@ const HomeScreen = ({ user, route }) => {
   const [exerciseName, setExerciseName] = useState("");
   const [duration, setDuration] = useState("");
   const [caloriesSpent, setCaloriesSpent] = useState("");
+
+  const [updateMealId, setUpdateMealId] = useState(null);
+  const [updateMealData, setUpdateMealData] = useState(null);
+  const [updateMealScreen, setUpdateMealScreen] = useState(false);
+
+  const handleUpdateMeal = (id) => {
+    const meal = meals.find((meal) => meal.meal_id === id);
+    console.log(meal);
+    setUpdateMealId(id);
+    setUpdateMealData(meal);
+    setUpdateMealScreen(true);
+  };
+
+  const handleUpdateMealSubmit = async () => {
+    const {
+      info: { name, calories, protein, fat, carbohydrates },
+      type_of_meal,
+    } = updateMealData;
+
+    try {
+      const data = await updateMeal(updateMealId, {
+        info: {
+          name,
+          calories,
+          protein,
+          fat,
+          carbohydrates,
+        },
+        type_of_meal,
+      });
+
+      if (data.success) {
+        setMessage("Meal updated successfully");
+        fetchData(); // fetch data again after update to get the latest meals
+        setTimeout(() => {
+          setUpdateMealScreen(false);
+          setMessage("");
+        }, 1000);
+      } else {
+        setMessage("There was a problem updating the meal");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setMessage("There was a problem updating the meal");
+    }
+  };
 
   const handleSubmitExercise = () => {
     const exerciseData = {
@@ -216,10 +262,21 @@ const HomeScreen = ({ user, route }) => {
                     <Text>Carbohydrates: {item.info.carbohydrates} g</Text>
                     <Text>Fat: {item.info.fat} g</Text>
                     <Text>Protein: {item.info.protein} g</Text>
+
+                    <TouchableOpacity
+                      style={styles.updateButton}
+                      onPress={() => handleUpdateMeal(item.meal_id)}
+                    >
+                      <MaterialCommunityIcons
+                        name='pencil'
+                        size={24}
+                        color='green'
+                      />
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.deleteButton}
-                      onPress={() => {
-                        deleteMeal(item.meal_id);
+                      onPress={async () => {
+                        await deleteMeal(item.meal_id);
                         fetchData();
                       }}
                     >
@@ -360,6 +417,80 @@ const HomeScreen = ({ user, route }) => {
           </View>
         </Modal>
       )}
+      {updateMealScreen && (
+        <Modal animationType='slide'>
+          <View style={styles.container}>
+            <TouchableOpacity
+              onPress={() => setUpdateMealScreen(false)}
+              style={styles.closeIcon}
+            >
+              <MaterialCommunityIcons name='close' size={30} color='#000' />
+            </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder='Meal Name'
+                value={updateMealData.info.name}
+                onChangeText={(text) =>
+                  setUpdateMealData({
+                    ...updateMealData,
+                    info: { ...updateMealData.info, name: text },
+                  })
+                }
+              />
+              <TextInput
+                placeholder='Type of Meal'
+                value={updateMealData.type_of_meal}
+                onChangeText={(text) =>
+                  setUpdateMealData({ ...updateMealData, type_of_meal: text })
+                }
+              />
+              <TextInput
+                placeholder='Calories'
+                value={String(updateMealData.info.calories)}
+                onChangeText={(text) =>
+                  setUpdateMealData({
+                    ...updateMealData,
+                    info: { ...updateMealData.info, calories: text },
+                  })
+                }
+              />
+              <TextInput
+                placeholder='Carbohydrates'
+                value={String(updateMealData.info.carbohydrates)}
+                onChangeText={(text) =>
+                  setUpdateMealData({
+                    ...updateMealData,
+                    info: { ...updateMealData.info, carbohydrates: text },
+                  })
+                }
+              />
+              <TextInput
+                placeholder='Fat'
+                value={String(updateMealData.info.fat)}
+                onChangeText={(text) =>
+                  setUpdateMealData({
+                    ...updateMealData,
+                    info: { ...updateMealData.info, fat: text },
+                  })
+                }
+              />
+              <TextInput
+                placeholder='Protein'
+                value={String(updateMealData.info.protein)}
+                onChangeText={(text) =>
+                  setUpdateMealData({
+                    ...updateMealData,
+                    info: { ...updateMealData.info, protein: text },
+                  })
+                }
+              />
+              <Button title='Update Meal' onPress={handleUpdateMealSubmit} />
+              <Divider />
+              <Text>{message}</Text>
+            </View>
+          </View>
+        </Modal>
+      )}
     </>
   );
 };
@@ -394,7 +525,7 @@ const styles = StyleSheet.create({
   deleteButton: {
     position: "absolute",
     right: 20,
-    top: 20,
+    bottom: 20,
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 5,
@@ -402,5 +533,14 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginTop: 50,
+  },
+  updateButton: {
+    position: "absolute",
+    right: 20,
+    top: 20,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
   },
 });

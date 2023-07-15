@@ -38,3 +38,23 @@ export const createMeal = (userId, mealData) => {
     console.error(err);
   });
 };
+
+export const updateMeal = (mealId, mealData) => {
+  return fetch(`${apiOrigin}/meals/${mealId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(mealData),
+  })
+  .then((res) => {
+    if (!res.ok) {
+      throw res;
+    }
+    return res.json();
+  })
+  .catch((err) => {
+    console.error(err);
+  });
+};
+
