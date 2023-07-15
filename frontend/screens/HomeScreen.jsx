@@ -245,7 +245,6 @@ const HomeScreen = ({ user, route }) => {
       });
       getExercises(user.id).then((data) => {
         setExercises(data);
-        console.log(data);
       });
     } catch (e) {
       console.log(e);

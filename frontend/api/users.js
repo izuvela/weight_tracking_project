@@ -27,8 +27,8 @@ export const createUser = (user) => {
 };
 
 // Update a user
-export const updateUser = (user) => {
-  return fetch(`${apiOrigin}/users/${user.id}`, {
+export const updateUser = (id, user) => {
+  return fetch(`${apiOrigin}/users/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

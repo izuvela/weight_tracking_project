@@ -16,6 +16,39 @@ app.get("/users", async (req, res) => {
   }
 });
 
+//Update user
+app.put("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      gender,
+      height,
+      weight,
+      date_of_birth,
+      physical_activity_level,
+      goal_weight,
+    } = req.body;
+    const updateUser = await pool.query(
+      "UPDATE \"user\" SET name = $1, gender = $2, height = $3, weight = $4, date_of_birth = $5, physical_activity_level = $6, goal_weight = $7 WHERE id = $8 RETURNING id, name, gender, height, weight, to_char(date_of_birth, 'YYYY-MM-DD') as date_of_birth, physical_activity_level, goal_weight",
+      [
+        name,
+        gender,
+        height,
+        weight,
+        date_of_birth,
+        physical_activity_level,
+        goal_weight,
+        id,
+      ]
+    );
+    const user = updateUser.rows[0];
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
 // Get a user
 app.get("/users/:id", async (req, res) => {
   try {

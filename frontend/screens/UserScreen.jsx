@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { deleteUser, getWeightIndicators } from "../api/users";
 import Divider from "../components/Divider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import UpdateUserScreen from "./UpdateUserScreen";
 
 const clearAll = async (user) => {
   try {
@@ -24,9 +25,10 @@ const clearAll = async (user) => {
   console.log("Deleted.");
 };
 
-const UserScreen = ({ user, route }) => {
+const UserScreen = ({ user, route, setUser }) => {
   const [weightIndicators, setWeightIndicators] = useState(null);
   const [deleteModal, setDeleteModal] = useState(false);
+  const [updateModal, setUpdateModal] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -60,6 +62,8 @@ const UserScreen = ({ user, route }) => {
             Body Fat Percentage: {weightIndicators.body_fat_percentage}%
           </Text>
           <Divider />
+          <Button title='Update user' onPress={() => setUpdateModal(true)} />
+          <Divider />
           <Button title='Delete user' onPress={() => setDeleteModal(true)} />
         </View>
       )}
@@ -77,6 +81,15 @@ const UserScreen = ({ user, route }) => {
             </Text>
             <Button title='Yes' onPress={() => clearAll(user)} />
           </View>
+        </Modal>
+      )}
+      {updateModal && (
+        <Modal animationType='slide'>
+          <UpdateUserScreen
+            user={user}
+            closeModal={() => setUpdateModal(false)}
+            setUser={setUser}
+          />
         </Modal>
       )}
     </>

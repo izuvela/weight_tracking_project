@@ -83,7 +83,7 @@ export default function App() {
             />
             <Tab.Screen
               name='User'
-              children={() => <UserScreen user={user} route={routeName} />}
+              children={() => <UserScreen user={user} route={routeName} setUser={setUser}/>}
               options={{
                 tabBarIcon: ({ color, size }) => (
                   <MaterialCommunityIcons
