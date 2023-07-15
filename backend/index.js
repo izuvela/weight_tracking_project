@@ -284,9 +284,9 @@ app.put("/exercises/:id", async (req, res) => {
     const { id } = req.params;
     const { info } = req.body;
     await pool.query("UPDATE exercise SET info = $1 WHERE id = $2", [info, id]);
-    res.json({ message: "Exercise updated successfully" });
+    res.json({ success: true });
   } catch (err) {
-    console.error(err.message);
+    res.json({ success: false });
   }
 });
 

@@ -14,7 +14,12 @@ import { getDiary, getPlan, updateDiary } from "../api/users";
 import Divider from "../components/Divider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { deleteMeal, getMeals, createMeal, updateMeal } from "../api/meals";
-import { deleteExercise, getExercises, createExercise } from "../api/exercises";
+import {
+  deleteExercise,
+  getExercises,
+  createExercise,
+  updateExercise,
+} from "../api/exercises";
 
 const HomeScreen = ({ user, route }) => {
   const [waterGoal, setWaterGoal] = useState(null);
@@ -48,6 +53,48 @@ const HomeScreen = ({ user, route }) => {
   const [updateMealId, setUpdateMealId] = useState(null);
   const [updateMealData, setUpdateMealData] = useState(null);
   const [updateMealScreen, setUpdateMealScreen] = useState(false);
+
+  const [updateExerciseId, setUpdateExerciseId] = useState(null);
+  const [updateExerciseData, setUpdateExerciseData] = useState(null);
+  const [updateExerciseScreen, setUpdateExerciseScreen] = useState(false);
+
+  const handleUpdateExercise = (id) => {
+    const exercise = exercises.find((exercise) => exercise.exercise_id === id);
+    console.log(exercise);
+    setUpdateExerciseId(id);
+    setUpdateExerciseData(exercise);
+    setUpdateExerciseScreen(true);
+  };
+
+  const handleUpdateExerciseSubmit = async () => {
+    const {
+      info: { name, duration, calories_spent },
+    } = updateExerciseData;
+
+    try {
+      const data = await updateExercise(updateExerciseId, {
+        info: {
+          name,
+          duration,
+          calories_spent,
+        },
+      });
+
+      if (data.success) {
+        setMessage("Exercise updated successfully");
+        fetchData();
+        setTimeout(() => {
+          setUpdateExerciseScreen(false);
+          setMessage("");
+        }, 1000);
+      } else {
+        setMessage("There was a problem updating the exercise");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setMessage("There was a problem updating the exercise");
+    }
+  };
 
   const handleUpdateMeal = (id) => {
     const meal = meals.find((meal) => meal.meal_id === id);
@@ -207,16 +254,33 @@ const HomeScreen = ({ user, route }) => {
 
   useEffect(() => {
     fetchData();
-    console.log("uspjeh");
   }, [route, mealsScreen, exercisesScreen]);
 
   return (
     <>
       {waterGoal && caloriesGoal && proteinGoal && (
         <View style={styles.container}>
-          <Text>Calories goal: {caloriesGoal}</Text>
-          <Text>Protein goal: {proteinGoal} g</Text>
-          <Text>Water goal: {waterGoal} L</Text>
+          <View style={styles.goal}>
+            <Text>Calories goal: {caloriesGoal}</Text>
+            {caloriesConsumed >= caloriesGoal && (
+              <Text style={styles.reachedText}>REACHED!</Text>
+            )}
+          </View>
+
+          <View style={styles.goal}>
+            <Text>Protein goal: {proteinGoal} g</Text>
+            {proteinConsumed >= proteinGoal && (
+              <Text style={styles.reachedText}>REACHED!</Text>
+            )}
+          </View>
+
+          <View style={styles.goal}>
+            <Text>Water goal: {waterGoal} L</Text>
+            {waterConsumed >= waterGoal && (
+              <Text style={styles.reachedText}>REACHED!</Text>
+            )}
+          </View>
+
           <Divider />
           <Text>Calories consumed: {caloriesConsumed}</Text>
           <Text>Protein consumed: {proteinConsumed} g</Text>
@@ -361,12 +425,23 @@ const HomeScreen = ({ user, route }) => {
                 renderItem={({ item }) => (
                   <View style={styles.item}>
                     <Text>Name: {item.info.name}</Text>
-                    <Text>Duration: {item.info.duration}</Text>
+                    <Text>Duration: {item.info.duration} min</Text>
                     <Text>Calories Spent: {item.info.calories_spent}</Text>
+
+                    <TouchableOpacity
+                      style={styles.updateButton}
+                      onPress={() => handleUpdateExercise(item.exercise_id)}
+                    >
+                      <MaterialCommunityIcons
+                        name='pencil'
+                        size={24}
+                        color='green'
+                      />
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.deleteButton}
-                      onPress={() => {
-                        deleteExercise(item.exercise_id);
+                      onPress={async () => {
+                        await deleteExercise(item.exercise_id);
                         fetchData();
                       }}
                     >
@@ -491,6 +566,56 @@ const HomeScreen = ({ user, route }) => {
           </View>
         </Modal>
       )}
+      {updateExerciseScreen && (
+        <Modal animationType='slide'>
+          <View style={styles.container}>
+            <TouchableOpacity
+              onPress={() => setUpdateExerciseScreen(false)}
+              style={styles.closeIcon}
+            >
+              <MaterialCommunityIcons name='close' size={30} color='#000' />
+            </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder='Exercise Name'
+                value={updateExerciseData.info.name}
+                onChangeText={(text) =>
+                  setUpdateExerciseData({
+                    ...updateExerciseData,
+                    info: { ...updateExerciseData.info, name: text },
+                  })
+                }
+              />
+              <TextInput
+                placeholder='Duration (min)'
+                value={String(updateExerciseData.info.duration)}
+                onChangeText={(text) =>
+                  setUpdateExerciseData({
+                    ...updateExerciseData,
+                    info: { ...updateExerciseData.info, duration: text },
+                  })
+                }
+              />
+              <TextInput
+                placeholder='Calories Spent'
+                value={String(updateExerciseData.info.calories_spent)}
+                onChangeText={(text) =>
+                  setUpdateExerciseData({
+                    ...updateExerciseData,
+                    info: { ...updateExerciseData.info, calories_spent: text },
+                  })
+                }
+              />
+              <Button
+                title='Update Exercise'
+                onPress={handleUpdateExerciseSubmit}
+              />
+              <Divider />
+              <Text>{message}</Text>
+            </View>
+          </View>
+        </Modal>
+      )}
     </>
   );
 };
@@ -498,6 +623,14 @@ const HomeScreen = ({ user, route }) => {
 export default HomeScreen;
 
 const styles = StyleSheet.create({
+  goal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  reachedText: {
+    color: "green",
+    marginLeft: 10,
+  },
   container: {
     padding: 30,
     paddingBottom: 100,
@@ -521,6 +654,9 @@ const styles = StyleSheet.create({
     padding: 20,
     marginVertical: 8,
     marginHorizontal: 16,
+    height: 140,
+    flex: 1,
+    justifyContent: "center",
   },
   deleteButton: {
     position: "absolute",
