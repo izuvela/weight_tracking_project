@@ -71,9 +71,9 @@ BEGIN
   protein_goal_value = ((1 - body_fat_percentage / 100) * NEW.weight) * 1.8;
   calories_goal_value = bmr * NEW.physical_activity_level;
   if NEW.goal_weight > NEW.weight then
-    calories_goal_value = calories_goal_value + 500;
+    calories_goal_value = calories_goal_value + 200;
   else
-    calories_goal_value = calories_goal_value - 500;
+    calories_goal_value = calories_goal_value - 200;
   end if;
   water_goal_value = (CASE NEW.gender WHEN 'M' THEN 3.7 ELSE 2.7 END);
 
@@ -116,36 +116,58 @@ FOR EACH ROW
 EXECUTE PROCEDURE insert_diary_defaults();
 
 
-CREATE OR REPLACE FUNCTION validate_meal_info()
+CREATE OR REPLACE FUNCTION calculate_total_calories()
 RETURNS TRIGGER AS $$
 DECLARE
-  info_json JSONB;
+    meal_info JSON;
+    calories INTEGER = 0;
+    r record;
 BEGIN
-  info_json := NEW.info::JSONB;
-  
-  IF info_json ? 'name' IS NOT TRUE OR info_json->>'name' IS NULL THEN
-    RAISE EXCEPTION 'Invalid meal data: name is missing or null';
-  END IF;
-  IF info_json ? 'calories' IS NOT TRUE OR info_json->>'calories' IS NULL THEN
-    RAISE EXCEPTION 'Invalid meal data: calories is missing or null';
-  END IF;
-  IF info_json ? 'protein' IS NOT TRUE OR info_json->>'protein' IS NULL THEN
-    RAISE EXCEPTION 'Invalid meal data: protein is missing or null';
-  END IF;
-  IF info_json ? 'fat' IS NOT TRUE OR info_json->>'fat' IS NULL THEN
-    RAISE EXCEPTION 'Invalid meal data: fat is missing or null';
-  END IF;
-  IF info_json ? 'carbohydrates' IS NOT TRUE OR info_json->>'carbohydrates' IS NULL THEN
-    RAISE EXCEPTION 'Invalid meal data: carbohydrates is missing or null';
-  END IF;
-  
-  RETURN NEW;
+    SELECT info INTO meal_info FROM meal WHERE id = NEW.meal_id;
+
+    FOR r IN SELECT (json_each(meal_info)).* 
+    LOOP
+        IF LOWER(r.key) = 'calories' THEN
+            calories := calories + r.value::INTEGER;
+        END IF;
+    END LOOP;
+
+    UPDATE diary SET total_calories_consumed = total_calories_consumed + calories WHERE id = NEW.diary_id;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER validate_meal_info_trigger
-BEFORE INSERT OR UPDATE ON meal
-FOR EACH ROW
-EXECUTE PROCEDURE validate_meal_info();
+
+CREATE TRIGGER update_calories_consumed
+AFTER INSERT ON diary_meal
+FOR EACH ROW EXECUTE PROCEDURE calculate_total_calories();
+
+CREATE OR REPLACE FUNCTION calculate_total_calories_spent()
+RETURNS TRIGGER AS $$
+DECLARE
+    exercise_info JSON;
+    calories_spent INTEGER = 0;
+    r record;
+BEGIN
+    SELECT info INTO exercise_info FROM exercise WHERE id = NEW.exercise_id;
+
+    FOR r IN SELECT (json_each(exercise_info)).* 
+    LOOP
+        IF LOWER(r.key) = 'calories_spent' THEN
+            calories_spent := calories_spent + CAST(r.value::text AS INTEGER);
+        END IF;
+    END LOOP;
+
+    UPDATE diary SET calories_consumed = calories_consumed - calories_spent WHERE id = NEW.diary_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_calories_consumed_after_exercise
+AFTER INSERT ON diary_exercise
+FOR EACH ROW EXECUTE PROCEDURE calculate_total_calories_spent();
+
+
+
 
 

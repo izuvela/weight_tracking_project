@@ -201,11 +201,6 @@ app.post("/users/:id/meals", async (req, res) => {
       "INSERT INTO diary_meal (diary_id, meal_id, type_of_meal) VALUES ((SELECT id FROM diary WHERE plan_id = $1 AND day = $2), $3, $4)",
       [plan.id, currentDate, meal.id, type_of_meal]
     );
-    // Update the diary with the calories, protein, and water consumed from the meal
-    await pool.query(
-      "UPDATE diary SET calories_consumed = calories_consumed + $1, protein_consumed = protein_consumed + $2 WHERE plan_id = $3 AND day = $4",
-      [info.calories, info.protein, plan.id, currentDate]
-    );
 
     res.json({ success: true });
   } catch (err) {
@@ -263,12 +258,6 @@ app.post("/users/:id/exercises", async (req, res) => {
     const diaryResult = await pool.query(
       "INSERT INTO diary_exercise (diary_id, exercise_id, time) VALUES ((SELECT id FROM diary WHERE plan_id = $1 AND day = $2), $3, $4)",
       [plan.id, currentDate, exercise.id, currentDate]
-    );
-
-    // Update the diary with the calories spent in the exercise
-    await pool.query(
-      "UPDATE diary SET calories_consumed = calories_consumed - $1 WHERE plan_id = $2 AND day = $3",
-      [info.calories_spent, plan.id, currentDate]
     );
 
     res.json({ success: true });
